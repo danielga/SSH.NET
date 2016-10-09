@@ -95,9 +95,31 @@ namespace Renci.SshNet.Sftp
         {
             var fullPath = GetFullRemotePath(path);
 
+            if (fullPath[0] != '/')
+            {
+                return fullPath;
+            }
+
             var canonizedPath = string.Empty;
 
-            var realPathFiles = RequestRealPath(fullPath, true);
+            var fullPathStart = fullPath;
+            string[] pathSplit = fullPath.Split('/');
+            pathSplit = pathSplit
+                            .Where(part => (part!=".") && (part!="") )
+                            .ToArray();
+            if (pathSplit.Where(part => part == "..").Count() > 0)
+            {
+                return fullPath;
+            }
+            canonizedPath = "/" + string.Join("/", pathSplit);
+
+            return canonizedPath;
+
+            /*var realPathFiles = RequestRealPath(fullPath, true);
+            if (realPathFiles == null || fullPath != realPathFiles.First().Key)
+            {
+
+            }
 
             if (realPathFiles != null)
             {
@@ -137,6 +159,7 @@ namespace Renci.SshNet.Sftp
             if (canonizedPath[canonizedPath.Length - 1] != '/')
                 slash = "/";
             return string.Format(CultureInfo.InvariantCulture, "{0}{1}{2}", canonizedPath, slash, pathParts[pathParts.Length - 1]);
+            */
         }
 
         public ISftpFileReader CreateFileReader(byte[] handle, ISftpSession sftpSession, uint chunkSize, int maxPendingReads, long? fileSize)
