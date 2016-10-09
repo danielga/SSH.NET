@@ -109,13 +109,33 @@ namespace Renci.SshNet.Sftp
                             .ToArray();
             if (pathSplit.Where(part => part == "..").Count() > 0)
             {
-                return fullPath;
+                int toRemove = 0;
+                List<string> pathSplit2 = new List<string>();
+                foreach(string part in pathSplit.Reverse())
+                {
+                    if (part == "..")
+                    {
+                        toRemove++;
+                        continue;
+                    }
+                    else
+                    {
+                        if (toRemove > 0)
+                        {
+                            toRemove--;
+                            continue;
+                        }
+                    }
+                    pathSplit2.Add(part);
+                }
+                pathSplit = pathSplit2.ToArray().Reverse();
             }
             canonizedPath = "/" + string.Join("/", pathSplit);
 
             return canonizedPath;
 
-            /*var realPathFiles = RequestRealPath(fullPath, true);
+            /* Current method of SSH.NET, let it here for easy rebase!
+            var realPathFiles = RequestRealPath(fullPath, true);
             if (realPathFiles == null || fullPath != realPathFiles.First().Key)
             {
 
@@ -1094,7 +1114,7 @@ namespace Renci.SshNet.Sftp
         /// <returns>
         /// The absolute path.
         /// </returns>
-        internal KeyValuePair<string, SftpFileAttributes>[] RequestRealPath(string path, bool nullOnError = false)
+        public KeyValuePair<string, SftpFileAttributes>[] RequestRealPath(string path, bool nullOnError = false)
         {
             SshException exception = null;
 
@@ -1351,6 +1371,23 @@ namespace Renci.SshNet.Sftp
 
             return result;
         }
+
+        /// <summary>
+        ///  Returs physical target of symlink, otherwise SftpPathNotFoundException
+        /// </summary>
+        /// <param name="symlinkPath"></param>
+        /// <returns></returns>
+        public KeyValuePair<string, SftpFileAttributes> GetSymlinkRealTarget(string symlinkPath)
+        {
+            string fullpath = this.GetFullRemotePath(symlinkPath);
+            KeyValuePair<string, SftpFileAttributes>[] results = this.RequestRealPath(fullpath);
+            if (results == null || results.Count() == 0)
+            {
+                throw new SftpPathNotFoundException();
+            }
+            return results[0];
+        }
+
 
         /// <summary>
         /// Performs SSH_FXP_SYMLINK request.
@@ -1650,5 +1687,6 @@ namespace Renci.SshNet.Sftp
 
             request.Complete(response);
         }
+        
     }
 }
