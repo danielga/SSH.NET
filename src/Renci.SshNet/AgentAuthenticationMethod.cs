@@ -120,7 +120,7 @@ namespace Renci.SshNet
                 this._authenticationResult = AuthenticationResult.Failure;
 
             //  Copy allowed authentication methods
-            this.AllowedAuthentications = e.Message.AllowedAuthentications.ToList();
+            this.AllowedAuthentications = e.Message.AllowedAuthentications;
 
             this._authenticationCompleted.Set();
         }
