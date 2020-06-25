@@ -2,7 +2,6 @@
 using System.Collections.Generic;
 using System.IO;
 using System.IO.MemoryMappedFiles;
-using System.Linq;
 using System.Net;
 using System.Text;
 using Renci.SshNet.Common;
@@ -89,12 +88,13 @@ namespace Renci.SshNet.Pageant
 
             using (var mmFile = MemoryMappedFile.CreateNew(mmFileName, AGENT_MAX_MSGLEN))
             {
+                var fileInfo = new FileInfo(mmFileName);
+                var security = fileInfo.GetAccessControl();
+                security.SetOwner(System.Security.Principal.WindowsIdentity.GetCurrent().User);
+                fileInfo.SetAccessControl(security);
+
                 using (var accessor = mmFile.CreateViewAccessor())
                 {
-                    var security = mmFile.GetAccessControl();
-                    security.SetOwner(System.Security.Principal.WindowsIdentity.GetCurrent().User);
-                    mmFile.SetAccessControl(security);
-
                     accessor.Write(0, IPAddress.NetworkToHostOrder(AGENT_MAX_MSGLEN - 4));
                     accessor.Write(4, SSH2_AGENTC_REQUEST_IDENTITIES);
 
@@ -159,12 +159,13 @@ namespace Renci.SshNet.Pageant
 
             using (var mmFile = MemoryMappedFile.CreateNew(mmFileName, AGENT_MAX_MSGLEN))
             {
+                var fileInfo = new FileInfo(mmFileName);
+                var security = fileInfo.GetAccessControl();
+                security.SetOwner(System.Security.Principal.WindowsIdentity.GetCurrent().User);
+                fileInfo.SetAccessControl(security);
+
                 using (var accessor = mmFile.CreateViewAccessor())
                 {
-                    var security = mmFile.GetAccessControl();
-                    security.SetOwner(System.Security.Principal.WindowsIdentity.GetCurrent().User);
-                    mmFile.SetAccessControl(security);
-
                     accessor.Write(0, IPAddress.NetworkToHostOrder(AGENT_MAX_MSGLEN - 4));
                     accessor.Write(4, SSH2_AGENTC_SIGN_REQUEST);
                     accessor.Write(5, IPAddress.NetworkToHostOrder(identity.Blob.Length));
